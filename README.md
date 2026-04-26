@@ -71,5 +71,5 @@ http://localhost:5173
 ## Contact
 
 * GitHub: https://github.com/kvivek00
-* Docker: https://hub.docker.com/r/kvivek00/real-time_network_intrusion_detection_system
+* Docker: https://hub.docker.com/u/kvivek00
 * LinkedIn: https://www.linkedin.com/in/konda-vivek-a41a53291/
