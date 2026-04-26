@@ -2,6 +2,13 @@
 
 Intrution Detection System (Host Based) using Feed-Forword Neural Networks.
 
+## Model Performance
+
+| Stage   | Model Type                 | F1 Score | Accuracy |
+| ------- | -------------------------- | -------- | -------- |
+| Stage 1 | Binary Classification      | 0.9864   | 0.9942   |
+| Stage 2 | Multi-Class Classification | 0.97XX   | 0.98XX   |
+
 ---
 
 ## ⚠️ Note
