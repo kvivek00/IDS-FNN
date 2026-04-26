@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Architecture – IDS Dashboard</title>
+  <meta name="description" content="System architecture of the Real-Time Network Intrusion Detection Dashboard." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --cyber-dark: #070B19;
+      --cyber-light: #0D1426;
+      --cyber-border: #1E293B;
+      --neon-blue: #00F0FF;
+      --neon-pink: #FF00E5;
+      --text-muted: #94A3B8;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--cyber-dark);
+      color: #fff;
+      font-family: 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.03;
+      background-image:
+        linear-gradient(var(--neon-blue) 1px, transparent 1px),
+        linear-gradient(90deg, var(--neon-blue) 1px, transparent 1px);
+      background-size: 40px 40px;
+      z-index: 0;
+    }
+
+    /* Top nav bar */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 32px;
+      border-bottom: 1px solid var(--cyber-border);
+      background: rgba(7, 11, 25, 0.85);
+      backdrop-filter: blur(12px);
+    }
+
+    nav a {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--neon-blue);
+      text-decoration: none;
+      letter-spacing: 0.08em;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+
+    nav a:hover {
+      opacity: 1;
+    }
+
+    nav span {
+      color: var(--text-muted);
+    }
+
+    /* Main content */
+    main {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      width: 100%;
+      max-width: 1200px;
+      padding: 64px 32px 80px;
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--neon-blue);
+      border: 1px solid var(--neon-blue);
+      border-radius: 999px;
+      padding: 4px 14px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin: 0 0 20px;
+      background: linear-gradient(135deg, #fff 30%, var(--neon-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      line-height: 1.7;
+      max-width: 640px;
+      margin: 0 0 56px;
+    }
+
+    /* ── Architecture Flow Diagram ── */
+    .flow-diagram {
+      background: var(--cyber-light);
+      border: 1px solid var(--cyber-border);
+      border-radius: 16px;
+      padding: 56px 32px 64px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    /* Node base */
+    .flow-node {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 14px 28px;
+      border-radius: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-align: center;
+      min-width: 280px;
+      transition: box-shadow 0.3s;
+      animation: nodeEntrance 0.6s ease both;
+    }
+
+    .flow-node:hover {
+      transform: translateY(-2px);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    /* Node variants */
+    .node-source {
+      background: linear-gradient(135deg, #0d2137 0%, #0a1a2e 100%);
+      border: 1.5px solid var(--neon-blue);
+      color: var(--neon-blue);
+      box-shadow: 0 0 18px rgba(0, 240, 255, 0.15), inset 0 0 14px rgba(0, 240, 255, 0.04);
+    }
+
+    .node-source:hover {
+      box-shadow: 0 0 32px rgba(0, 240, 255, 0.35);
+    }
+
+    .node-process {
+      background: linear-gradient(135deg, #0d1a33 0%, #091525 100%);
+      border: 1.5px solid #3B82F6;
+      color: #93C5FD;
+      box-shadow: 0 0 14px rgba(59, 130, 246, 0.15);
+    }
+
+    .node-process:hover {
+      box-shadow: 0 0 28px rgba(59, 130, 246, 0.35);
+    }
+
+    .node-model {
+      background: linear-gradient(135deg, #14082e 0%, #0d042a 100%);
+      border: 1.5px solid #A855F7;
+      color: #D8B4FE;
+      box-shadow: 0 0 14px rgba(168, 85, 247, 0.2);
+    }
+
+    .node-model:hover {
+      box-shadow: 0 0 28px rgba(168, 85, 247, 0.4);
+    }
+
+    .node-api {
+      background: linear-gradient(135deg, #1a1006 0%, #110b00 100%);
+      border: 1.5px solid #F59E0B;
+      color: #FCD34D;
+      box-shadow: 0 0 14px rgba(245, 158, 11, 0.15);
+    }
+
+    .node-api:hover {
+      box-shadow: 0 0 28px rgba(245, 158, 11, 0.35);
+    }
+
+    .node-backend {
+      background: linear-gradient(135deg, #0d1f14 0%, #081710 100%);
+      border: 1.5px solid #22C55E;
+      color: #86EFAC;
+      box-shadow: 0 0 14px rgba(34, 197, 94, 0.15);
+    }
+
+    .node-backend:hover {
+      box-shadow: 0 0 28px rgba(34, 197, 94, 0.35);
+    }
+
+    .node-storage {
+      background: linear-gradient(135deg, #1a0d0d 0%, #130808 100%);
+      border: 1.5px solid #EF4444;
+      color: #FCA5A5;
+      box-shadow: 0 0 14px rgba(239, 68, 68, 0.15);
+    }
+
+    .node-storage:hover {
+      box-shadow: 0 0 28px rgba(239, 68, 68, 0.35);
+    }
+
+    .node-frontend {
+      background: linear-gradient(135deg, #0d1f1a 0%, #081715 100%);
+      border: 1.5px solid var(--neon-blue);
+      color: var(--neon-blue);
+      box-shadow: 0 0 22px rgba(0, 240, 255, 0.2), inset 0 0 18px rgba(0, 240, 255, 0.04);
+    }
+
+    .node-frontend:hover {
+      box-shadow: 0 0 38px rgba(0, 240, 255, 0.4);
+    }
+
+    .node-leaf {
+      min-width: 200px;
+      font-size: 12px;
+      padding: 10px 20px;
+    }
+
+    /* Icon badge inside node */
+    .node-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    /* Connector (vertical line + animated pulse dot) */
+    .connector {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      height: 54px;
+      position: relative;
+    }
+
+    .connector::before {
+      content: '';
+      width: 2px;
+      flex: 1;
+      background: linear-gradient(to bottom, rgba(0, 240, 255, 0.4), rgba(0, 240, 255, 0.1));
+    }
+
+    .connector::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--neon-blue);
+      box-shadow: 0 0 10px var(--neon-blue);
+      flex-shrink: 0;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    /* Animated moving dot along connector */
+    .dot-travel {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 6px var(--neon-blue);
+      animation: travelDown 1.8s linear infinite;
+      z-index: 10;
+    }
+
+    .dot-travel.dot-green {
+      background: #22C55E;
+      box-shadow: 0 0 10px #22C55E, 0 0 20px rgba(34, 197, 94, 0.4);
+    }
+
+    .dot-travel.dot-red {
+      background: #EF4444;
+      box-shadow: 0 0 10px #EF4444, 0 0 20px rgba(239, 68, 68, 0.4);
+    }
+
+    /* Directional overrides */
+    .dot-to-right {
+      animation-name: travelRight;
+    }
+
+    .dot-to-left {
+      animation-name: travelLeft;
+    }
+
+    @keyframes travelRight {
+      0% {
+        left: 0;
+        opacity: 0.8;
+      }
+
+      100% {
+        left: 100%;
+        opacity: 0;
+      }
+    }
+
+    @keyframes travelLeft {
+      0% {
+        left: 100%;
+        opacity: 0.8;
+      }
+
+      100% {
+        left: 0;
+        opacity: 0;
+      }
+    }
+
+    /* Branch split layout */
+    .branch-container {
+      display: flex;
+      align-items: flex-start;
+      gap: 80px;
+      position: relative;
+      margin: 0;
+    }
+
+    .branch-arm {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    /* Horizontal bridge line between branch arms */
+    .branch-bridge {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      height: 2px;
+      width: calc(100% - 120px);
+      background: linear-gradient(to right, rgba(0, 240, 255, 0.1), rgba(0, 240, 255, 0.4), rgba(0, 240, 255, 0.1));
+    }
+
+    /* Backend branches (WebSocket + PostgreSQL side by side) */
+    .backend-branch-container {
+      display: flex;
+      align-items: flex-start;
+      gap: 40px;
+      position: relative;
+      margin: 0;
+    }
+
+    .backend-branch-arm {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    .connector-sm {
+      height: 36px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .connector-sm::before {
+      content: '';
+      width: 2px;
+      flex: 1;
+      background: linear-gradient(to bottom, rgba(0, 240, 255, 0.4), rgba(0, 240, 255, 0.1));
+    }
+
+    .connector-sm::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--neon-blue);
+      box-shadow: 0 0 8px var(--neon-blue);
+      flex-shrink: 0;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    /* Collects branches back */
+    .merge-connector {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 48px;
+    }
+
+    .merge-connector::before {
+      content: '';
+      width: 2px;
+      flex: 1;
+      background: linear-gradient(to bottom, rgba(0, 240, 255, 0.2), rgba(0, 240, 255, 0.5));
+    }
+
+    .merge-connector::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--neon-blue);
+      box-shadow: 0 0 10px var(--neon-blue);
+      flex-shrink: 0;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    /* Legend row at bottom */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px 32px;
+      margin-top: 40px;
+      justify-content: center;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* Animations */
+    @keyframes nodeEntrance {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        box-shadow: 0 0 6px var(--neon-blue);
+      }
+
+      50% {
+        box-shadow: 0 0 16px var(--neon-blue), 0 0 30px rgba(0, 240, 255, 0.5);
+      }
+    }
+
+    @keyframes travelDown {
+      0% {
+        top: 0;
+        opacity: 1;
+      }
+
+      80% {
+        opacity: 1;
+      }
+
+      100% {
+        top: 100%;
+        opacity: 0;
+      }
+    }
+
+    /* Stagger node entrance */
+    .flow-node:nth-child(1) {
+      animation-delay: 0.1s;
+    }
+
+    .flow-node:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .flow-node:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+
+    .flow-node:nth-child(4) {
+      animation-delay: 0.4s;
+    }
+
+    .flow-node:nth-child(5) {
+      animation-delay: 0.5s;
+    }
+
+    .flow-node:nth-child(6) {
+      animation-delay: 0.6s;
+    }
+
+    /* Footer */
+    footer {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      border-top: 1px solid var(--cyber-border);
+      text-align: center;
+      padding: 20px 32px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    footer a {
+      color: var(--neon-blue);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav>
+    <a href="/">← Back to Dashboard</a>
+    <span>/</span>
+    <span style="color:#fff;">Architecture</span>
+  </nav>
+
+  <main>
+    <div class="badge">System Design</div>
+
+    <h1>Architecture</h1>
+
+    <p class="subtitle">
+      An overview of the system architecture powering the Real-Time Network
+      Intrusion Detection Dashboard — components, data flow, and integrations.
+    </p>
+
+    <!-- ── Architecture Flow Diagram ── -->
+    <div class="flow-diagram">
+
+      <!-- 1. Network Traffic -->
+      <div class="flow-node node-source">
+        <span class="node-icon">🌐</span> Network Traffic
+      </div>
+
+      <!-- connector -->
+      <div class="connector">
+        <div class="dot-travel"></div>
+      </div>
+
+      <!-- 2. Feature Extraction -->
+      <div class="flow-node node-process">
+        <span class="node-icon">🔬</span> Feature Extraction &nbsp;<span style="color:#64748b;font-weight:400">(Flow
+          Scraper)</span>
+      </div>
+
+      <div class="connector">
+        <div class="dot-travel"></div>
+      </div>
+
+      <!-- 3. Feature Preprocessing -->
+      <div class="flow-node node-process">
+        <span class="node-icon">⚙️</span> Feature Preprocessing
+      </div>
+
+      <div class="connector">
+        <div class="dot-travel"></div>
+      </div>
+
+      <!-- 4. Binary Attack Detection Model -->
+      <div class="flow-node node-model">
+        <span class="node-icon">🧠</span> Binary Attack Detection Model <br>Accuracy: 0.9957<br>F1: 0.9967
+      </div>
+
+      <!-- Branch: Normal Traffic  ↔  6-Class Model -->
+      <div
+        style="position:relative; display:flex; flex-direction:column; align-items:center; width:100%; max-width:640px;">
+        <!-- horizontal bar -->
+        <div
+          style="width:100%; height:36px; position:relative; display:flex; align-items:flex-start; justify-content:space-between;">
+          <!-- left arm top line -->
+          <div
+            style="width:2px; height:36px; background:linear-gradient(to bottom,rgba(34,197,94,0.5),rgba(34,197,94,0.1)); margin-left:80px; position:relative;">
+            <!-- Green dot moving down -->
+            <div class="dot-travel dot-green" style="animation-delay: 0.5s;"></div>
+          </div>
+          <!-- horizontal bridge -->
+          <div
+            style="position:absolute; top:0; left:80px; right:80px; height:2px; background:linear-gradient(to right,rgba(34,197,94,0.4),rgba(168,85,247,0.4)); overflow: hidden;">
+            <!-- Green dot going left -->
+            <div class="dot-travel dot-green dot-to-left"
+              style="top: -2px; width: 6px; height: 6px; animation-duration: 1s;"></div>
+            <!-- Red dot going right -->
+            <div class="dot-travel dot-red dot-to-right"
+              style="top: -2px; width: 6px; height: 6px; animation-duration: 1s;"></div>
+          </div>
+          <!-- right arm top line -->
+          <div
+            style="width:2px; height:36px; background:linear-gradient(to bottom,rgba(168,85,247,0.5),rgba(168,85,247,0.1)); margin-right:80px; position:relative;">
+            <!-- Red dot moving down -->
+            <div class="dot-travel dot-red" style="animation-delay: 0.5s;"></div>
+          </div>
+        </div>
+
+        <!-- two leaves side by side -->
+        <div class="branch-container" style="gap:40px;">
+          <!-- Normal Traffic leaf -->
+          <div style="display:flex;flex-direction:column;align-items:center;">
+            <div class="flow-node node-backend node-leaf">
+              <span class="node-icon">✅</span> Normal Traffic
+            </div>
+          </div>
+
+          <!-- 6-Class Classification leaf -->
+          <div style="display:flex;flex-direction:column;align-items:center;">
+            <div class="flow-node node-model node-leaf">
+              <span class="node-icon">🔍</span> 6-Class Attack Classification <br>Accuracy: 0.9942<br>F1: 0.9864
+            </div>
+            <div class="connector-sm" style="position:relative;">
+              <div class="dot-travel dot-red"></div>
+            </div>
+            <!-- FastAPI -->
+            <div class="flow-node node-api" style="min-width:220px;">
+              <span class="node-icon">⚡</span> FastAPI Streaming API
+            </div>
+          </div>
+        </div>
+
+        <!-- merge back -->
+        <div
+          style="width:2px; height:48px; background:linear-gradient(to bottom,rgba(245,158,11,0.4),rgba(0,240,255,0.5)); margin-top:0; position:relative;">
+          <div class="dot-travel dot-red"></div>
+        </div>
+      </div>
+
+      <!-- 5. Node.js Backend -->
+      <div class="flow-node node-backend">
+        <span class="node-icon">🖥️</span> Node.js Backend
+      </div>
+
+      <!-- Connector to WebSocket -->
+      <div class="connector" style="position:relative;">
+        <div class="dot-travel dot-red"></div>
+      </div>
+
+      <!-- WebSocket node -->
+      <div class="flow-node node-source node-leaf" style="min-width:280px;">
+        <span class="node-icon">🔌</span> WebSocket Live Dashboard
+      </div>
+
+      <!-- Connector to Frontend -->
+      <div class="connector" style="position:relative;">
+        <div class="dot-travel dot-red"></div>
+      </div>
+
+
+      <!-- 6. React Frontend -->
+      <div class="flow-node node-frontend" style="min-width:320px;">
+        <span class="node-icon">📊</span> React Frontend Dashboard
+      </div>
+
+      <!-- Legend -->
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-dot" style="background:#00F0FF;"></div> Data Source
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:#3B82F6;"></div> Processing
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:#A855F7;"></div> ML Models
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:#F59E0B;"></div> API Layer
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:#22C55E;"></div> Backend
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Detailed Content Sections ── -->
+    <div class="details-container">
+
+      <!-- 1. Network Traffic -->
+      <div class="detail-card" style="animation-delay: 0.7s;">
+        <h2><span>🌐</span> Network Traffic</h2>
+        <p>Raw packets flowing through the network are captured from the selected network interface. These packets
+          represent real-time communication between hosts and form the input data for the IDS pipeline.</p>
+      </div>
+
+      <!-- 2. Feature Extraction -->
+      <div class="detail-card" style="animation-delay: 0.8s;">
+        <h2><span>🔬</span> Feature Extraction (Flow Scraper)</h2>
+        <p>The packet capture module groups packets into network flows (based on source IP, destination IP, ports, and
+          protocol). From each flow, statistical features such as packet counts, durations, and byte statistics are
+          extracted. These features represent the behavior of the traffic and are used by the machine learning model.
+        </p>
+        <ul class="feature-list">
+          <li><b>PROTOCOL</b> – Transport protocol used (TCP, UDP, ICMP).</li>
+          <li><b>L7_PROTO</b> – Application layer protocol (HTTP, DNS, FTP, etc.).</li>
+          <li><b>IN_BYTES</b> – Total bytes received in the flow.</li>
+          <li><b>IN_PKTS</b> – Number of incoming packets.</li>
+          <li><b>OUT_BYTES</b> – Total bytes sent in the flow.</li>
+          <li><b>OUT_PKTS</b> – Number of outgoing packets.</li>
+          <li><b>TCP_FLAGS</b> – Combined TCP flag values observed.</li>
+          <li><b>CLIENT_TCP_FLAGS</b> – TCP flags set by the client.</li>
+          <li><b>SERVER_TCP_FLAGS</b> – TCP flags set by the server.</li>
+          <li><b>FLOW_DURATION_MILLISECONDS</b> – Total duration of the flow in milliseconds.</li>
+          <li><b>DURATION_IN</b> – Duration of incoming traffic.</li>
+          <li><b>DURATION_OUT</b> – Duration of outgoing traffic.</li>
+          <li><b>MIN_TTL</b> – Minimum TTL value observed.</li>
+          <li><b>MAX_TTL</b> – Maximum TTL value observed.</li>
+          <li><b>LONGEST_FLOW_PKT</b> – Size of the largest packet in the flow.</li>
+          <li><b>SHORTEST_FLOW_PKT</b> – Size of the smallest packet in the flow.</li>
+          <li><b>MIN_IP_PKT_LEN</b> – Minimum IP packet length observed.</li>
+          <li><b>MAX_IP_PKT_LEN</b> – Maximum IP packet length observed.</li>
+          <li><b>SRC_TO_DST_SECOND_BYTES</b> – Bytes per second from source to destination.</li>
+          <li><b>DST_TO_SRC_SECOND_BYTES</b> – Bytes per second from destination to source.</li>
+          <li><b>RETRANSMITTED_IN_BYTES</b> – Retransmitted incoming bytes.</li>
+          <li><b>RETRANSMITTED_IN_PKTS</b> – Retransmitted incoming packets.</li>
+          <li><b>RETRANSMITTED_OUT_BYTES</b> – Retransmitted outgoing bytes.</li>
+          <li><b>RETRANSMITTED_OUT_PKTS</b> – Retransmitted outgoing packets.</li>
+          <li><b>SRC_TO_DST_AVG_THROUGHPUT</b> – Average throughput from source to destination.</li>
+          <li><b>DST_TO_SRC_AVG_THROUGHPUT</b> – Average throughput from destination to source.</li>
+          <li><b>NUM_PKTS_UP_TO_128_BYTES</b> – Number of packets ≤128 bytes.</li>
+          <li><b>NUM_PKTS_128_TO_256_BYTES</b> – Number of packets between 128–256 bytes.</li>
+          <li><b>NUM_PKTS_256_TO_512_BYTES</b> – Number of packets between 256–512 bytes.</li>
+          <li><b>NUM_PKTS_512_TO_1024_BYTES</b> – Number of packets between 512–1024 bytes.</li>
+          <li><b>NUM_PKTS_1024_TO_1514_BYTES</b> – Number of packets between 1024–1514 bytes.</li>
+          <li><b>TCP_WIN_MAX_IN</b> – Maximum TCP window size received.</li>
+          <li><b>TCP_WIN_MAX_OUT</b> – Maximum TCP window size sent.</li>
+          <li><b>ICMP_TYPE</b> – ICMP message type.</li>
+          <li><b>DNS_QUERY_TYPE</b> – DNS query type (A, AAAA, MX, etc.).</li>
+          <li><b>DNS_TTL_ANSWER</b> – TTL value in DNS response.</li>
+          <li><b>FTP_COMMAND_RET_CODE</b> – FTP server response code.</li>
+        </ul>
+      </div>
+
+      <!-- 3. Preprocessing -->
+      <div class="detail-card" style="animation-delay: 0.9s;">
+        <h2><span>⚙️</span> Feature Preprocessing</h2>
+        <p>Before training a Neural Network we pre-process the data, so before giving the input for predictions, the
+          input features should also be subjected to same pre-processing. This step includes operations such as scaling,
+          normalization, and feature ordering to ensure consistency with the data used during model training.</p>
+
+        <div class="sub-group">
+          <h3>Numerical Encoding</h3>
+          <p>Attack labels are converted to integers (e.g., Benign = 0, DDoS = 1, …).</p>
+        </div>
+
+        <div class="sub-group">
+          <h3>Remove Unrealistic Values</h3>
+          <p>Extremely large values (e.g., > 10⁹) are trimmed to avoid instability.</p>
+        </div>
+
+        <div class="sub-group">
+          <h3>Log Transformation</h3>
+          <p>Heavy-tailed features (bytes, packets, throughput, durations) are transformed using:</p>
+          <div class="formula">log(1 + x)</div>
+          <p>to reduce skew.</p>
+        </div>
+
+        <div class="sub-group">
+          <h3>Standardization (Z-score)</h3>
+          <p>Continuous features are scaled:</p>
+          <div class="formula">z = (x - mean) / std</div>
+          <p>to bring them to a common scale.</p>
+        </div>
+
+        <div class="sub-group">
+          <h3>Class Imbalance Handling</h3>
+          <p>Dataset is highly imbalanced. Applied square-root inverse frequency weighting + normalization to balance
+            rare and frequent classes.</p>
+        </div>
+
+        <div class="sub-group">
+          <h3>Categorical Feature Normalization</h3>
+          <p>Large-range features (e.g., PROTOCOL, TCP_FLAGS, ICMP_TYPE) are scaled to:</p>
+          <div class="formula">x = x / max(x)</div>
+          <p>to avoid exploding gradients.</p>
+        </div>
+      </div>
+
+      <!-- 4. Binary Model -->
+      <div class="detail-card" style="animation-delay: 1.0s;">
+        <h2><span>🧠</span> Binary Attack Detection Model – Architecture</h2>
+        <p>The binary classifier is implemented using a deep residual multi-layer perceptron (Residual MLP) designed for
+          efficient and stable learning from tabular network features.</p>
+
+        <div class="sub-group">
+          <h3>Input Layer</h3>
+          <ul class="feature-list" style="grid-template-columns: 1fr;">
+            <li>Takes 37 preprocessed features as input.</li>
+          </ul>
+        </div>
+
+        <div class="sub-group">
+          <h3>Hidden Layers</h3>
+          <p>The model consists of multiple fully connected layers with Batch Normalization, GELU activation, and
+            Dropout:</p>
+          <div class="architecture-spec">
+            <div class="spec-item"><b>Layer 1</b> <span class="spec-arrow">→</span> 37 to 1024</div>
+            <div class="spec-item"><b>Layer 2</b> <span class="spec-arrow">→</span> 1024 to 1024 <span
+                style="color:var(--neon-blue);font-size:0.8rem;">(Residual Applied)</span></div>
+            <div class="spec-item"><b>Layer 3</b> <span class="spec-arrow">→</span> 1024 to 512</div>
+            <div class="spec-item"><b>Layer 4</b> <span class="spec-arrow">→</span> 512 to 256</div>
+            <div class="spec-item"><b>Layer 5</b> <span class="spec-arrow">→</span> 256 to 128</div>
+          </div>
+        </div>
+
+        <div class="sub-group">
+          <h3>Residual Connection</h3>
+          <p>A skip connection is added between the first and second layers:</p>
+          <div class="formula">x2 = x2 + x1</div>
+          <p>This helps prevent vanishing gradients, improve training stability, and enable deeper feature learning.</p>
+        </div>
+
+        <div class="sub-group">
+          <h3>Regularization & Activation</h3>
+          <ul class="feature-list" style="grid-template-columns: 1fr;">
+            <li>Batch Normalization <span class="spec-arrow">→</span> stabilizes training</li>
+            <li>Dropout (0.15) <span class="spec-arrow">→</span> reduces overfitting</li>
+            <li>GELU activation <span class="spec-arrow">→</span> smoother and more effective than ReLU</li>
+          </ul>
+        </div>
+
+        <div class="sub-group">
+          <h3>Output Layer</h3>
+          <p>Final layer: 128 → 2 neurons. Outputs probabilities for:</p>
+          <ul class="feature-list" style="grid-template-columns: 1fr;">
+            <li>0 <span class="spec-arrow">→</span> Benign</li>
+            <li>1 <span class="spec-arrow">→</span> Attack</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 5. Normal Traffic -->
+      <div class="detail-card" style="animation-delay: 1.1s; border-left: 4px solid #22C55E;">
+        <h2><span>✅</span> Normal Traffic</h2>
+        <p>If the binary model classifies the flow as benign, the flow is considered normal and no further attack
+          analysis is performed. The system continues monitoring subsequent traffic.</p>
+      </div>
+
+      <!-- 6. 6-Class Model -->
+      <div class="detail-card" style="animation-delay: 1.2s;">
+        <h2><span>🔍</span> 6-Class Attack Classification – Architecture</h2>
+        <p>If a flow is classified as malicious by the binary model, it is passed to a second Residual MLP for detailed
+          attack classification.</p>
+
+        <div class="sub-group">
+          <h3>Input Layer</h3>
+          <ul class="feature-list" style="grid-template-columns: 1fr;">
+            <li>Takes the same 37 preprocessed features.</li>
+          </ul>
+        </div>
+
+        <div class="sub-group">
+          <h3>Hidden Layers</h3>
+          <p>The model uses fully connected layers with Batch Normalization, GELU activation, and Dropout:</p>
+          <div class="architecture-spec">
+            <div class="spec-item"><b>Layer 1</b> <span class="spec-arrow">→</span> 37 to 768</div>
+            <div class="spec-item"><b>Layer 2</b> <span class="spec-arrow">→</span> 768 to 768 <span
+                style="color:var(--neon-blue);font-size:0.8rem;">(Residual Applied)</span></div>
+            <div class="spec-item"><b>Layer 3</b> <span class="spec-arrow">→</span> 768 to 512</div>
+            <div class="spec-item"><b>Layer 4</b> <span class="spec-arrow">→</span> 512 to 256</div>
+            <div class="spec-item"><b>Layer 5</b> <span class="spec-arrow">→</span> 256 to 128</div>
+          </div>
+        </div>
+
+        <div class="sub-group">
+          <h3>Output Layer</h3>
+          <p>Final layer: 128 → 6 neurons. Outputs one of the attack classes:</p>
+          <div class="attack-classes">
+            <span class="attack-tag">DDoS</span>
+            <span class="attack-tag">DoS</span>
+            <span class="attack-tag">Bots</span>
+            <span class="attack-tag">Brute Force</span>
+            <span class="attack-tag">Scanning</span>
+            <span class="attack-tag">Exploits</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. FastAPI -->
+      <div class="detail-card" style="animation-delay: 1.3s;">
+        <h2><span>⚡</span> FastAPI Streaming API</h2>
+        <p>The prediction results are exposed through a FastAPI streaming endpoint. This API continuously outputs
+          analyzed network flows and detected attacks in real time, allowing other system components to consume the
+          data.</p>
+      </div>
+
+      <!-- 8. Node.js -->
+      <div class="detail-card" style="animation-delay: 1.4s;">
+        <h2><span>🖥️</span> Node.js Backend</h2>
+        <p>The Node.js backend connects to the FastAPI stream and processes the incoming IDS events. It acts as a
+          middleware layer that manages data flow and distributes alerts to connected clients.</p>
+      </div>
+
+      <!-- 9. WebSocket -->
+      <div class="detail-card" style="animation-delay: 1.5s;">
+        <h2><span>🔌</span> WebSocket Live Dashboard</h2>
+        <p>Using WebSocket communication, the backend pushes IDS events instantly to connected frontend clients. This
+          enables real-time updates without requiring repeated HTTP requests.</p>
+      </div>
+
+      <!-- 10. React -->
+      <div class="detail-card" style="animation-delay: 1.6s;">
+        <h2><span>📊</span> React Frontend Dashboard</h2>
+        <p>The React-based dashboard visualizes the IDS results. It displays live network activity, detected attacks,
+          and relevant metadata, allowing users to monitor network security in real time.</p>
+      </div>
+
+    </div>
+    <!-- ── End of architecture content ── -->
+  </main>
+
+  <footer>
+    Real-Time Network Intrusion Detection Dashboard &nbsp;|&nbsp;
+    Developed by <a href="https://github.com/kvivek00" target="_blank">Konda Vivek</a> © 2026
+  </footer>
+
+</body>
+
+</html>

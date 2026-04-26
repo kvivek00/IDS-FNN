@@ -1,0 +1,8 @@
+torch==2.5.1
+numpy==2.4.2
+fastapi==0.135.1
+uvicorn==0.41.0
+pydantic==2.12.5
+scapy==2.7.0
+pandas==3.0.0
+joblib==1.5.3
