@@ -40,7 +40,7 @@ This system can:
 
 ## ⚠️ Note
 
-Designed for only linux Operating Systems, Might Not work in the Virtual Machines as the Virtual MAchines can only virtualize OS but not the Kernel.
+Designed for only linux Operating Systems, Might Not work in the Virtual Machines as the Virtual Machines can only virtualize OS but not the Kernel.
 
 ---
 
