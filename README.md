@@ -2,12 +2,39 @@
 
 Intrution Detection System (Host Based) using Feed-Forword Neural Networks.
 
+## Detection Capabilities
+
+This system can:
+
+* Detect whether network traffic is **Normal or Malicious**
+* Classify attacks into the following categories:
+  * **DDoS**
+  * **DoS**
+  * **Bots**
+  * **Brute Force**
+  * **Scanning**
+  * **Exploits**
+* Perform **real-time detection** using live packet capture
+* Analyze network behavior using **feature extraction and machine learning**
+* Provide **fast and accurate predictions** through a trained FNN model
+* Enable **continuous monitoring** of host-based network activity
+* Deliver results via an **interactive dashboard for visualization**
+
+## Data Flow
+* Network traffic is captured in real-time using packet sniffing
+* Relevant features are extracted from the captured packets
+* Stage 1: Binary Model classifies traffic as Normal or Attack
+* If classified as Attack,
+* → Stage 2: Multi-Class Model identifies the specific attack type
+* The prediction results are sent to the backend API
+* Results are displayed on the frontend dashboard
+  
 ## Model Performance
 
 | Stage   | Model Type                 | F1 Score | Accuracy |
 | ------- | -------------------------- | -------- | -------- |
-| Stage 1 | Binary Classification      | 0.9864   | 0.9942   |
-| Stage 2 | Multi-Class Classification | 0.97XX   | 0.98XX   |
+| Stage 1 | Binary Classification      | 0.9967   | 0.9957   |
+| Stage 2 | Multi-Class Classification | 0.9864   | 0.9942   |
 
 ---
 
