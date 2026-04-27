@@ -31,10 +31,10 @@ This system can:
   
 ## Model Performance
 
-| Stage   | Model Type                 | F1 Score | Accuracy |
-| ------- | -------------------------- | -------- | -------- |
-| Stage 1 | Binary Classification      | 0.9967   | 0.9957   |
-| Stage 2 | Multi-Class Classification | 0.9864   | 0.9942   |
+| Stage   | Model Type                 | F1 Score | Accuracy | Parameters |
+| ------- | -------------------------- | -------- | -------- | ---------- |
+| Stage 1 | Binary Classification      | 0.9967   | 0.9957   | 1,183,366  |
+| Stage 2 | Multi-Class Classification | 0.9864   | 0.9942   | 1,183,366  |
 
 ---
 
