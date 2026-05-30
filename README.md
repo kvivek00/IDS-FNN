@@ -37,6 +37,14 @@ This system can:
 | Stage 2 | Multi-Class Classification | 0.9864   | 0.9942   | 1,183,366  |
 
 ---
+## Training Dataset
+
+IDS-FNN was trained using the NF-UQ-NIDS-v2 dataset for large-scale hierarchical intrusion detection and attack classification.
+
+**Dataset Statistics**
+**Dataset:** NF-UQ-NIDS-v2
+**Total Network Flow Instances Processed:** 68,869,996
+---
 ## Project Presentation
 [IDS-FNN.pdf](https://github.com/user-attachments/files/28419180/IDS-FNN.pdf)
 
