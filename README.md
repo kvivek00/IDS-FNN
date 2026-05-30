@@ -37,6 +37,8 @@ This system can:
 | Stage 2 | Multi-Class Classification | 0.9864   | 0.9942   | 1,183,366  |
 
 ---
+## Project Presentation
+[IDS-FNN.pdf](https://github.com/user-attachments/files/28419180/IDS-FNN.pdf)
 
 ## ⚠️ Note
 
